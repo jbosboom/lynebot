@@ -1,0 +1,47 @@
+<project name="lynebot" basedir="." default="jar">
+	<target name="fetch">
+		<mkdir dir="lib"/>
+		<mkdir dir="lib/doc"/>
+		<mkdir dir="lib/src"/>
+
+		<get src="http://search.maven.org/remotecontent?filepath=com/google/guava/guava/17.0/guava-17.0.jar"
+			 dest="lib/guava.jar"
+			 skipexisting="true"/>
+		<get src="http://search.maven.org/remotecontent?filepath=com/google/guava/guava/17.0/guava-17.0-javadoc.jar"
+			 dest="lib/doc/guava-doc.jar"
+			 skipexisting="true"/>
+		<get src="http://search.maven.org/remotecontent?filepath=com/google/guava/guava/17.0/guava-17.0-sources.jar"
+			 dest="lib/src/guava-src.jar"
+			 skipexisting="true"/>
+	</target>
+
+	<target name="clean">
+		<delete dir="build"/>
+	</target>
+
+	<target name="compile">
+		<mkdir dir="build/classes"/>
+		<javac srcdir="src" destdir="build/classes" debug="true" includeantruntime="false">
+			<classpath>
+				<fileset dir="lib">
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="build/jar"/>
+		<jar destfile="build/jar/lynebot.jar" basedir="build/classes">
+<!--			<manifest>
+				<attribute name="Main-Class" value="${main-class}"/>
+			</manifest>-->
+		</jar>
+	</target>
+
+<!--	<target name="run" depends="jar">
+		<java jar="${jar.dir}/${ant.project.name}.jar" fork="true"/>
+	</target>-->
+
+	<target name="clean-build" depends="clean,jar"/>
+</project>
