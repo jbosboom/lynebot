@@ -18,7 +18,7 @@ public final class Colors {
 	public static final int PIP = rgb(121, 189, 154);
 	public static final int TERMINAL_CENTER = rgb(233, 241, 223);
 
-	public static final ImmutableMap<Integer, Node.Kind> NODE_COLORS = ImmutableMap.of(TRIANGLE, Node.Kind.TRIANGLE, DIAMOND, Node.Kind.TRIANGLE, SQUARE, Node.Kind.SQUARE, OCTAGON, Node.Kind.OCTAGON);
+	public static final ImmutableMap<Integer, Node.Kind> NODE_COLORS = ImmutableMap.of(TRIANGLE, Node.Kind.TRIANGLE, DIAMOND, Node.Kind.DIAMOND, SQUARE, Node.Kind.SQUARE, OCTAGON, Node.Kind.OCTAGON);
 
 	private static int rgb(int r, int g, int b) {
 		return 0xFF << 24 | r << 16 | g << 8 | b;
