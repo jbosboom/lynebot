@@ -2,18 +2,14 @@ package com.jeffreybosboom.region;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.jeffreybosboom.lyne.Colors;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Deque;
 import java.util.IntSummaryStatistics;
 import java.util.List;
-import javax.imageio.ImageIO;
 
 /**
  *
@@ -129,11 +125,5 @@ public final class Region {
 		public String toString() {
 			return String.format("(%d, %d)", x, y);
 		}
-	}
-
-	public static void main(String[] args) throws IOException {
-		BufferedImage image = ImageIO.read(new File("266010_2014-06-29_00001.png"));
-		ImmutableSet<Region> regions = Region.connectedComponents(image);
-		regions.stream().filter(r -> Colors.NODE_COLORS.keySet().contains(r.color)).map(Region::centroid).forEachOrdered(System.out::println);
 	}
 }
