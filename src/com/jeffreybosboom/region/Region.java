@@ -75,6 +75,10 @@ public final class Region {
 		return builder.build();
 	}
 
+	public int color() {
+		return color;
+	}
+
 	public ImmutableList<Point> points() {
 		return points;
 	}
