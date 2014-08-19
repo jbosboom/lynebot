@@ -27,6 +27,7 @@ public final class Region {
 		this.color = color;
 		this.points = ImmutableList.copyOf(points);
 		//TODO: lazy initialize?
+		//TODO: compute in one pass?
 		this.xStats = this.points.stream().mapToInt(Point::x).summaryStatistics();
 		this.yStats = this.points.stream().mapToInt(Point::y).summaryStatistics();
 	}
