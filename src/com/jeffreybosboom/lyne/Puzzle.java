@@ -34,8 +34,8 @@ public final class Puzzle {
 			for (int y = 0; y < nodes[0].length; ++y) {
 				Node n = nodes[x][y];
 				if (n == null) continue;
-				assert n.x() == x;
-				assert n.y() == y;
+				assert n.row() == x;
+				assert n.col() == y;
 				for (int[] adj : BUILD_ADJUST) {
 					int xa = x + adj[0], ya = y + adj[1];
 					if (!(0 <= xa && xa < nodes.length && 0 <= ya && ya < nodes[0].length)) continue;
@@ -189,7 +189,7 @@ public final class Puzzle {
 	}
 
 	private static Pair<Node, Node> canonicalOrder(Node a, Node b) {
-		if (!(a.x() < b.x() || a.x() == b.x() && a.y() < b.y())) {
+		if (!(a.row() < b.row() || a.row() == b.row() && a.col() < b.col())) {
 			 Node t = a;
 			 a = b;
 			 b = t;

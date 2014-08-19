@@ -17,39 +17,39 @@ public final class Node {
 			return colored;
 		}
 	};
-	private final int x, y;
+	private final int row, col;
 	private final Kind kind;
 	/**
 	 * 1 for terminals, 2 for non-terminals, pips*2 for octagons.
 	 */
 	private final int desiredEdges;
-	private Node(int x, int y, Kind kind, int desiredEdges) {
-		this.x = x;
-		this.y = y;
+	private Node(int row, int col, Kind kind, int desiredEdges) {
+		this.row = row;
+		this.col = col;
 		this.kind = kind;
 		this.desiredEdges = desiredEdges;
 	}
 
-	public static Node terminal(int x, int y, Kind kind) {
+	public static Node terminal(int row, int col, Kind kind) {
 		Preconditions.checkArgument(kind.isColored(), "creating terminal of %s", kind);
-		return new Node(x, y, kind, 1);
+		return new Node(row, col, kind, 1);
 	}
 
-	public static Node nonterminal(int x, int y, Kind kind) {
+	public static Node nonterminal(int row, int col, Kind kind) {
 		Preconditions.checkArgument(kind.isColored(), "creating nonterminal of %s", kind);
-		return new Node(x, y, kind, 2);
+		return new Node(row, col, kind, 2);
 	}
 
-	public static Node octagon(int x, int y, int pips) {
-		return new Node(x, y, Kind.OCTAGON, pips*2);
+	public static Node octagon(int row, int col, int pips) {
+		return new Node(row, col, Kind.OCTAGON, pips*2);
 	}
 
-	public int x() {
-		return x;
+	public int row() {
+		return row;
 	}
 
-	public int y() {
-		return y;
+	public int col() {
+		return col;
 	}
 
 	public Kind kind() {
