@@ -51,7 +51,7 @@ public final class Region {
 			frontier.push(new Point(fillX, fillY));
 			while (!frontier.isEmpty()) {
 				Point p = frontier.pop();
-				int bitIndex = p.x + p.y * image.getWidth();
+				int bitIndex = p.row() * image.getWidth() + p.col();
 				if (processed.get(bitIndex)) continue;
 				if (image.getRGB(p.x, p.y) != color) continue;
 
