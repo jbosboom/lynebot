@@ -2,6 +2,8 @@ package com.jeffreybosboom.region;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.jeffreybosboom.lyne.Colors;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Deque;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 import javax.imageio.ImageIO;
 
@@ -22,11 +25,14 @@ public final class Region {
 	 * as from BufferedImage.getRGB
 	 */
 	private final int color;
-	private final ImmutableList<Point> pixels;
-	//TODO: summary stats?
-	private Region(int color, List<Point> pixels) {
+	private final ImmutableList<Point> points;
+	private final IntSummaryStatistics xStats, yStats;
+	private Region(int color, List<Point> points) {
 		this.color = color;
-		this.pixels = ImmutableList.copyOf(pixels);
+		this.points = ImmutableList.copyOf(points);
+		//TODO: lazy initialize?
+		this.xStats = this.points.stream().mapToInt(Point::x).summaryStatistics();
+		this.yStats = this.points.stream().mapToInt(Point::y).summaryStatistics();
 	}
 
 	private static final int[][] NEIGHBORHOOD = {
@@ -69,11 +75,31 @@ public final class Region {
 		return builder.build();
 	}
 
+	public ImmutableList<Point> points() {
+		return points;
+	}
+
+	public Point centroid() {
+		return new Point((int)xStats.getAverage(), (int)yStats.getAverage());
+	}
+
+	public Rectangle boundingBox() {
+		return new Rectangle(xStats.getMin(), yStats.getMin(),
+				xStats.getMax() - xStats.getMin(), yStats.getMax() - yStats.getMin());
+	}
+
 	public static final class Point {
 		public final int x, y;
 		public Point(int x, int y) {
 			this.x = x;
 			this.y = y;
+		}
+		//these are mostly for method references (field refs don't exist)
+		public int x() {
+			return x;
+		}
+		public int y() {
+			return y;
 		}
 		@Override
 		public boolean equals(Object obj) {
@@ -95,13 +121,15 @@ public final class Region {
 			hash = 13 * hash + this.y;
 			return hash;
 		}
+		@Override
+		public String toString() {
+			return String.format("(%d, %d)", x, y);
+		}
 	}
 
 	public static void main(String[] args) throws IOException {
 		BufferedImage image = ImageIO.read(new File("266010_2014-06-29_00001.png"));
-		System.out.println(image.getRGB(408, 759));
 		ImmutableSet<Region> regions = Region.connectedComponents(image);
-		int baseRed = -4032420;
-		System.out.println(regions.stream().filter(r -> r.color == baseRed).count());
+		regions.stream().filter(r -> Colors.NODE_COLORS.keySet().contains(r.color)).map(Region::centroid).forEachOrdered(System.out::println);
 	}
 }
