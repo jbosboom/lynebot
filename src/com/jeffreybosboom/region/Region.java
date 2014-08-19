@@ -101,6 +101,13 @@ public final class Region {
 		public int y() {
 			return y;
 		}
+		//row/col is reversed, of course
+		public int row() {
+			return y;
+		}
+		public int col() {
+			return x;
+		}
 		@Override
 		public boolean equals(Object obj) {
 			if (obj == null)
