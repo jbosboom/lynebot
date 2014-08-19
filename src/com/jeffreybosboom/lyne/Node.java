@@ -30,17 +30,17 @@ public final class Node {
 		this.desiredEdges = desiredEdges;
 	}
 
-	public Node terminal(int x, int y, Kind kind) {
+	public static Node terminal(int x, int y, Kind kind) {
 		Preconditions.checkArgument(kind.isColored(), "creating terminal of %s", kind);
 		return new Node(x, y, kind, 1);
 	}
 
-	public Node nonterminal(int x, int y, Kind kind) {
+	public static Node nonterminal(int x, int y, Kind kind) {
 		Preconditions.checkArgument(kind.isColored(), "creating nonterminal of %s", kind);
 		return new Node(x, y, kind, 2);
 	}
 
-	public Node octagon(int x, int y, int pips) {
+	public static Node octagon(int x, int y, int pips) {
 		return new Node(x, y, Kind.OCTAGON, pips*2);
 	}
 
