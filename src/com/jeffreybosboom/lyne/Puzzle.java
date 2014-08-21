@@ -129,8 +129,8 @@ public final class Puzzle {
 				.map(p -> new int[]{n.row() + p[0], n.col() + p[1]})
 				.filter(p -> 0 <= p[0] && p[0] < nodes.length)
 				.filter(p -> 0 <= p[1] && p[1] < nodes[0].length)
-				.filter(x -> x != null)
-				.map(p -> nodes[p[0]][p[1]]);
+				.map(p -> nodes[p[0]][p[1]])
+				.filter(x -> x != null);
 	}
 
 //	/**
