@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
+import com.google.common.collect.Sets;
 import com.google.common.collect.TreeRangeSet;
 import com.jeffreybosboom.region.Region;
 import com.jeffreybosboom.region.Region.Point;
@@ -12,7 +13,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
@@ -31,10 +34,22 @@ public final class Puzzle {
 	};
 	private final Node[][] nodes;
 	private final ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets;
-	private Puzzle(Node[][] nodes) {
-		assert Arrays.stream(nodes).mapToInt(x -> x.length).distinct().count() == 1 : "array not rectangular";
+	private Puzzle(Node[][] nodes, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
 		this.nodes = nodes;
+		this.edgeSets = edgeSets;
+	}
+
+	/**
+	 * Creates a puzzle from the given nodes, performing inference on initial
+	 * edge sets based on node kinds.
+	 * @param nodes
+	 * @return
+	 */
+	private static Puzzle initialState(Node[][] nodes) {
+		assert Arrays.stream(nodes).mapToInt(x -> x.length).distinct().count() == 1 : "array not rectangular";
 		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> builder = ImmutableTable.builder();
+		ImmutableSet<Node.Kind> allPossibilities = ImmutableSet.of(
+				Node.Kind.TRIANGLE, Node.Kind.DIAMOND, Node.Kind.SQUARE, Node.Kind.NONE);
 		for (int x = 0; x < nodes.length; ++x)
 			for (int y = 0; y < nodes[0].length; ++y) {
 				Node n = nodes[x][y];
@@ -46,10 +61,18 @@ public final class Puzzle {
 					if (!(0 <= xa && xa < nodes.length && 0 <= ya && ya < nodes[0].length)) continue;
 					Node a = nodes[xa][ya];
 					if (a == null) continue;
-					builder.put(n, a, initialEdgeSet(n, a));
+					builder.put(n, a, allPossibilities);
 				}
 			}
-		this.edgeSets = builder.build();
+		Puzzle retval = new Puzzle(nodes, builder.build());
+
+		for (Iterator<Pair<Node, Node>> i = retval.pairs().iterator(); i.hasNext();) {
+			Pair<Node, Node> p = i.next();
+			Set<Node.Kind> removals = Sets.difference(allPossibilities, initialEdgeSet(p.first, p.second));
+			for (Node.Kind k : removals)
+				retval = retval.remove(p.first, p.second, k);
+		}
+		return retval;
 	}
 	private static ImmutableSet<Node.Kind> initialEdgeSet(Node n, Node a) {
 		if (n.kind() == Node.Kind.OCTAGON && a.kind() == Node.Kind.OCTAGON)
@@ -61,11 +84,6 @@ public final class Puzzle {
 		if (n.kind().isColored() && n.kind().equals(a.kind()))
 			return ImmutableSet.of(n.kind(), Node.Kind.NONE);
 		return ImmutableSet.of(Node.Kind.NONE);
-	}
-
-	private Puzzle(Node[][] nodes, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
-		this.nodes = nodes;
-		this.edgeSets = edgeSets;
 	}
 
 	//TODO: this actually belongs in a UI controller class, as we need to
@@ -117,7 +135,7 @@ public final class Puzzle {
 				puzzle[row][col] = terminal ? Node.terminal(row, col, kind) : Node.nonterminal(row, col, kind);
 			}
 		}
-		return new Puzzle(puzzle);
+		return Puzzle.initialState(puzzle);
 	}
 
 	public Stream<Node> nodes() {
