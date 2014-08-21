@@ -55,9 +55,9 @@ public final class Puzzle {
 		if (n.kind() == Node.Kind.OCTAGON && a.kind() == Node.Kind.OCTAGON)
 			return ImmutableSet.copyOf(Node.Kind.values());
 		if (n.kind().isColored() && a.kind() == Node.Kind.OCTAGON)
-			return ImmutableSet.of(a.kind(), Node.Kind.NONE);
-		if (n.kind() == Node.Kind.OCTAGON && a.kind().isColored())
 			return ImmutableSet.of(n.kind(), Node.Kind.NONE);
+		if (n.kind() == Node.Kind.OCTAGON && a.kind().isColored())
+			return ImmutableSet.of(a.kind(), Node.Kind.NONE);
 		if (n.kind().isColored() && n.kind().equals(a.kind()))
 			return ImmutableSet.of(n.kind(), Node.Kind.NONE);
 		return ImmutableSet.of(Node.Kind.NONE);
