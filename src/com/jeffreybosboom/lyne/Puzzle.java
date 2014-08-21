@@ -133,13 +133,13 @@ public final class Puzzle {
 				.filter(x -> x != null);
 	}
 
-//	/**
-//	 * Returns each pair of adjacent nodes
-//	 * @return
-//	 */
-//	public Stream<Pair<Node, Node>> pairs() {
-//
-//	}
+	/**
+	 * Returns each pair of adjacent nodes exactly once.
+	 * @return
+	 */
+	public Stream<Pair<Node, Node>> pairs() {
+		return nodes().filter(n -> n != null).flatMap(a -> neighbors(a).map(b -> canonicalOrder(a, b))).distinct();
+	}
 
 	public ImmutableSet<Node.Kind> possibilities(Node a, Node b) {
 		Pair<Node, Node> p = canonicalOrder(a, b);
