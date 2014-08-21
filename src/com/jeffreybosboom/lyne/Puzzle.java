@@ -172,7 +172,7 @@ public final class Puzzle {
 				possibilities.stream().filter(x -> x != possibility).iterator());
 		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> tableBuilder = ImmutableTable.builder();
 		edgeSets.cellSet().stream()
-				.filter(c -> !(c.getColumnKey().equals(p.first) && c.getRowKey().equals(p.second)))
+				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
 		tableBuilder.put(p.first, p.second, newSet);
 		Puzzle result = new Puzzle(nodes, tableBuilder.build());
@@ -204,7 +204,7 @@ public final class Puzzle {
 
 		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> tableBuilder = ImmutableTable.builder();
 		edgeSets.cellSet().stream()
-				.filter(c -> !(c.getColumnKey().equals(p.first) && c.getRowKey().equals(p.second)))
+				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
 		tableBuilder.put(p.first, p.second, ImmutableSet.of(possibility));
 		Puzzle result = new Puzzle(nodes, tableBuilder.build());
