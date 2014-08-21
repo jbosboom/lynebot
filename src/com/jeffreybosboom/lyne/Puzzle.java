@@ -270,7 +270,7 @@ public final class Puzzle {
 		//Canonical order and not-same-row/col enforces it's a down-right edge.
 		Node ac = nodes[p.first.row()+1][p.first.col()], bc = nodes[p.second.row()-1][p.second.col()];
 		if (ac == null || bc == null) return this;
-		return set(a, b, Node.Kind.NONE);
+		return set(ac, bc, Node.Kind.NONE);
 	}
 
 	private static Pair<Node, Node> canonicalOrder(Node a, Node b) {
