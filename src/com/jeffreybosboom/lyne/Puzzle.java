@@ -24,6 +24,11 @@ import javax.imageio.ImageIO;
  */
 public final class Puzzle {
 	private static final int[][] BUILD_ADJUST = {{0, 1}, {1, -1}, {1, 0}, {1, 1}};
+	private static final int[][] NEIGHBORHOOD = {
+		{-1, -1}, {-1, 0}, {-1, 1},
+		{0, -1}, {0, 1},
+		{1, -1}, {1, 0}, {1, 1},
+	};
 	private final Node[][] nodes;
 	private final ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets;
 	private Puzzle(Node[][] nodes) {
@@ -119,6 +124,15 @@ public final class Puzzle {
 		return Arrays.stream(nodes).flatMap(Arrays::stream).filter(x -> x != null);
 	}
 
+	public Stream<Node> neighbors(Node n) {
+		return Arrays.stream(NEIGHBORHOOD)
+				.map(p -> new int[]{n.row() + p[0], n.col() + p[1]})
+				.filter(p -> 0 <= p[0] && p[0] < nodes.length)
+				.filter(p -> 0 <= p[1] && p[1] < nodes[0].length)
+				.filter(x -> x != null)
+				.map(p -> nodes[p[0]][p[1]]);
+	}
+
 //	/**
 //	 * Returns each pair of adjacent nodes
 //	 * @return
@@ -135,8 +149,11 @@ public final class Puzzle {
 	/**
 	 * Returns a Puzzle with the given possibility removed from the edge between
 	 * the given nodes.  If the possibility is already not possible, this Puzzle
-	 * is returned.  If this removes the last possibility, a
-	 * ContradictionException is thrown.
+	 * is returned.  If this removes the last possibility for this edge,
+	 * a ContradictionException is thrown.  If the edge was modified,
+	 * {@link Node#desiredEdges() desired-edges} processing will be performed on
+	 * both nodes (possibly leading to further recursive modification), possibly
+	 * leading to a ContradictionException.
 	 * @param a
 	 * @param b
 	 * @param possibility
@@ -158,14 +175,19 @@ public final class Puzzle {
 				.filter(c -> !(c.getColumnKey().equals(p.first) && c.getRowKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
 		tableBuilder.put(p.first, p.second, newSet);
-		return new Puzzle(nodes, tableBuilder.build());
+		Puzzle result = new Puzzle(nodes, tableBuilder.build());
+		if (possibility == Node.Kind.NONE)
+			result = result.setCrossingEdgeToNone(a, b);
+		return result.desiredEdges(a).desiredEdges(b);
 	}
 
 	/**
 	 * Returns a Puzzle with the given possibility being the only one in the
-	 * edge between the given nodes.  If this possibility is already the only
+	 * edge between the given nodes.  If the edge is diagonal and being set to a
+	 * possibility besides NONE, the crossing edge
+	 * (if any) is set to NONE.  If this possibility is already the only
 	 * possible, this Puzzle is returned.  If this possibility is not possible,
-	 * a ContradictionException is thrown.
+	 * a ContradictionException is thrown.  Also deferred-edges processing.
 	 * @param a
 	 * @param b
 	 * @param possibility
@@ -185,7 +207,70 @@ public final class Puzzle {
 				.filter(c -> !(c.getColumnKey().equals(p.first) && c.getRowKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
 		tableBuilder.put(p.first, p.second, ImmutableSet.of(possibility));
-		return new Puzzle(nodes, tableBuilder.build());
+		Puzzle result = new Puzzle(nodes, tableBuilder.build());
+		if (possibility != Node.Kind.NONE)
+			result = result.setCrossingEdgeToNone(a, b);
+		return result.desiredEdges(a).desiredEdges(b);
+	}
+
+	/**
+	 * Applies desired-edges inference rules to the given node:
+	 * <ul>
+	 * <li> If the node desires N edges and there are N edges with only colored
+	 * possibilities, all other edges are set to NONE.
+	 * <li> If the node desires N edges and there are N-K edges with only
+	 * colored possibilities and K unknown edges, NONE is removed from all
+	 * unknown edges.
+	 * </ul>
+	 * @param a
+	 * @return
+	 * @throws ContradictionException
+	 */
+	private Puzzle desiredEdges(Node a) {
+		List<Node> neighbors = neighbors(a).collect(Collectors.toList());
+		int knownColored = 0, knownNone = 0;
+		for (Node n : neighbors) {
+			ImmutableSet<Node.Kind> possibilities = possibilities(a, n);
+			if (!possibilities.contains(Node.Kind.NONE))
+				++knownColored;
+			if (possibilities.stream().noneMatch(Node.Kind::isColored))
+				++knownNone;
+		}
+		int unknown = neighbors.size() - knownColored - knownNone;
+
+		if (knownColored > a.desiredEdges())
+			throw new ContradictionException();
+		if (knownColored + unknown < a.desiredEdges())
+			throw new ContradictionException();
+		if (unknown == 0) //nothing to do here
+			return this;
+
+		Puzzle retval = this;
+		//All unknown possibilities are NONE.
+		if (knownColored == a.desiredEdges())
+			for (Node n : neighbors) {
+				ImmutableSet<Node.Kind> possibilities = possibilities(a, n);
+				if (possibilities.contains(Node.Kind.NONE) && possibilities.stream().anyMatch(Node.Kind::isColored))
+					retval = retval.set(a, n, Node.Kind.NONE);
+			}
+		//All unknown possibilities are not NONE (but we don't know which color).
+		else if (knownColored + unknown == a.desiredEdges())
+			for (Node n : neighbors) {
+				ImmutableSet<Node.Kind> possibilities = possibilities(a, n);
+				if (possibilities.contains(Node.Kind.NONE) && possibilities.stream().anyMatch(Node.Kind::isColored))
+					retval = retval.remove(a, n, Node.Kind.NONE);
+			}
+		return retval;
+	}
+
+	private Puzzle setCrossingEdgeToNone(Node a, Node b) {
+		if (a.row() == b.row() || a.col() == b.col()) //no crossing edge
+			return this;
+		Pair<Node, Node> p = canonicalOrder(a, b);
+		//Canonical order and not-same-row/col enforces it's a down-right edge.
+		Node ac = nodes[p.first.row()+1][p.first.col()], bc = nodes[p.second.row()-1][p.second.col()];
+		if (ac == null || bc == null) return this;
+		return set(a, b, Node.Kind.NONE);
 	}
 
 	private static Pair<Node, Node> canonicalOrder(Node a, Node b) {

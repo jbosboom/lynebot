@@ -56,18 +56,18 @@ public final class Node {
 		return kind;
 	}
 
-	public int edges() {
+	public int desiredEdges() {
 		return desiredEdges;
 	}
 
 	public boolean isTerminal() {
-		return edges() == 1;
+		return desiredEdges() == 1;
 	}
 
 	@Override
 	public String toString() {
 		if (kind() == Kind.OCTAGON)
-			return Integer.toString(edges()/2);
+			return Integer.toString(desiredEdges()/2);
 		char firstLetter = kind().name().charAt(0);
 		return Character.toString(isTerminal() ? firstLetter : Character.toLowerCase(firstLetter));
 	}
