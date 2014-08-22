@@ -1,5 +1,6 @@
 package com.jeffreybosboom.lyne;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Range;
@@ -84,6 +85,27 @@ public final class Puzzle {
 		if (n.kind().isColored() && n.kind().equals(a.kind()))
 			return ImmutableSet.of(n.kind(), Node.Kind.NONE);
 		return ImmutableSet.of(Node.Kind.NONE);
+	}
+
+	public static Puzzle fromString(String str) {
+		String[] rows = str.split("\n");
+		checkArgument(Arrays.stream(rows).mapToInt(s -> s.length()).distinct().count() == 1, "not rectangular");
+		Node[][] nodes = new Node[rows.length][rows[0].length()];
+		for (int row = 0; row < rows.length; ++row)
+			for (int col = 0; col < rows[0].length(); ++col) {
+				char c = rows[row].charAt(col);
+				if (Character.isDigit(c))
+					nodes[row][col] = Node.octagon(row, col, Character.digit(c, 10));
+				else {
+					Node.Kind kind = Arrays.stream(Node.Kind.values())
+							.filter(k -> k.toString().startsWith(""+Character.toUpperCase(c)))
+							.findFirst().get();
+					nodes[row][col] = Character.isUpperCase(c) ?
+							Node.terminal(row, col, kind) :
+							Node.nonterminal(row, col, kind);
+				}
+			}
+		return initialState(nodes);
 	}
 
 	//TODO: this actually belongs in a UI controller class, as we need to
