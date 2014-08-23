@@ -1,13 +1,14 @@
 package com.jeffreybosboom.lyne;
 
 import com.google.common.base.Preconditions;
+import java.util.Comparator;
 
 /**
  * Nodes are the vertices of the puzzle graph.
  * @author Jeffrey Bosboom <jbosboom@csail.mit.edu>
  * @since 8/7/2014
  */
-public final class Node {
+public final class Node implements Comparable<Node> {
 	public enum Kind {TRIANGLE(true), DIAMOND(true), SQUARE(true), OCTAGON(false), NONE(false);
 		private final boolean colored;
 		private Kind(boolean colored) {
@@ -62,6 +63,14 @@ public final class Node {
 
 	public boolean isTerminal() {
 		return desiredEdges() == 1;
+	}
+
+	private static final Comparator<Node> COMPARATOR =
+			Comparator.comparingInt(Node::row)
+					.thenComparingInt(Node::col);
+	@Override
+	public int compareTo(Node o) {
+		return COMPARATOR.compare(this, o);
 	}
 
 	@Override
