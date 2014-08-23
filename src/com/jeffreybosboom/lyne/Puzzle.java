@@ -172,7 +172,7 @@ public final class Puzzle {
 		return nodes().filter(Node::isTerminal)
 				.collect(Collectors.groupingBy(Node::kind))
 				.values().stream()
-				.map(l -> {assert l.size() == 2 : l; return canonicalOrder(l.get(0), l.get(1));});
+				.map(l -> {assert l.size() == 2 : l; return Pair.sorted(l.get(0), l.get(1));});
 	}
 
 	public Stream<Node> neighbors(Node n) {
@@ -189,11 +189,11 @@ public final class Puzzle {
 	 * @return
 	 */
 	public Stream<Pair<Node, Node>> pairs() {
-		return nodes().filter(n -> n != null).flatMap(a -> neighbors(a).map(b -> canonicalOrder(a, b))).distinct();
+		return nodes().filter(n -> n != null).flatMap(a -> neighbors(a).map(b -> Pair.sorted(a, b))).distinct();
 	}
 
 	public ImmutableSet<Node.Kind> possibilities(Node a, Node b) {
-		Pair<Node, Node> p = canonicalOrder(a, b);
+		Pair<Node, Node> p = Pair.sorted(a, b);
 		return edgeSets.get(p.first, p.second);
 	}
 
@@ -212,7 +212,7 @@ public final class Puzzle {
 	 * @throws ContradictionException
 	 */
 	public Puzzle remove(Node a, Node b, Node.Kind possibility) {
-		Pair<Node, Node> p = canonicalOrder(a, b);
+		Pair<Node, Node> p = Pair.sorted(a, b);
 		ImmutableSet<Node.Kind> possibilities = possibilities(a, b);
 		if (!possibilities.contains(possibility))
 			return this;
@@ -246,7 +246,7 @@ public final class Puzzle {
 	 * @throws ContradictionException
 	 */
 	public Puzzle set(Node a, Node b, Node.Kind possibility) {
-		Pair<Node, Node> p = canonicalOrder(a, b);
+		Pair<Node, Node> p = Pair.sorted(a, b);
 		ImmutableSet<Node.Kind> possibilities = possibilities(a, b);
 		if (!possibilities.contains(possibility))
 			throw new ContradictionException();
@@ -317,20 +317,11 @@ public final class Puzzle {
 	private Puzzle setCrossingEdgeToNone(Node a, Node b) {
 		if (a.row() == b.row() || a.col() == b.col()) //no crossing edge
 			return this;
-		Pair<Node, Node> p = canonicalOrder(a, b);
+		Pair<Node, Node> p = Pair.sorted(a, b);
 		//Canonical order and not-same-row/col enforces it's a down-right edge.
 		Node ac = nodes[p.first.row()+1][p.first.col()], bc = nodes[p.second.row()-1][p.second.col()];
 		if (ac == null || bc == null) return this;
 		return set(ac, bc, Node.Kind.NONE);
-	}
-
-	private static Pair<Node, Node> canonicalOrder(Node a, Node b) {
-		if (!(a.row() < b.row() || a.row() == b.row() && a.col() < b.col())) {
-			 Node t = a;
-			 a = b;
-			 b = t;
-		 }
-		return new Pair<>(a, b);
 	}
 
 	@Override
