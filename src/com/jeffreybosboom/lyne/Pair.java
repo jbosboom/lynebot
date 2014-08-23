@@ -15,6 +15,12 @@ public final class Pair<A, B> {
 		this.second = second;
 	}
 
+	public static <T extends Comparable<T>> Pair<T, T> sorted(T a, T b) {
+		if (a.compareTo(b) > 0)
+			return new Pair<>(b, a);
+		return new Pair<>(a, b);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null)
