@@ -164,6 +164,17 @@ public final class Puzzle {
 		return Arrays.stream(nodes).flatMap(Arrays::stream).filter(x -> x != null);
 	}
 
+	/**
+	 * Returns the pair of terminals for each color present in the puzzle.
+	 * @return pairs of terminals
+	 */
+	public Stream<Pair<Node, Node>> terminals() {
+		return nodes().filter(Node::isTerminal)
+				.collect(Collectors.groupingBy(Node::kind))
+				.values().stream()
+				.map(l -> {assert l.size() == 2 : l; return canonicalOrder(l.get(0), l.get(1));});
+	}
+
 	public Stream<Node> neighbors(Node n) {
 		return Arrays.stream(NEIGHBORHOOD)
 				.map(p -> new int[]{n.row() + p[0], n.col() + p[1]})
