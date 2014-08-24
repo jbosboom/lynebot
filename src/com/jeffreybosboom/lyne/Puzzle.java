@@ -333,7 +333,7 @@ public final class Puzzle {
 				sb.append(n == null ? " " : n.toString());
 			sb.append("\n");
 		}
-		return sb.toString();
+		return sb.toString().trim();
 	}
 
 	public static void main(String[] args) throws IOException {
