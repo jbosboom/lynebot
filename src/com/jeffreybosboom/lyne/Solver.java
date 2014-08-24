@@ -26,7 +26,7 @@ public class Solver {
 		ImmutableSet<Node.Kind> possibilities = p.possibilities(edge.first, edge.second);
 		for (Node.Kind k : possibilities)
 			try {
-				return solve(p.remove(edge.first, edge.second, k));
+				return solve(p.set(edge.first, edge.second, k));
 			} catch (ContradictionException e) {}
 		return null;
 	}
