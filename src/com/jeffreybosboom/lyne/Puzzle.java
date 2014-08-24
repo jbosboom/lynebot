@@ -13,6 +13,10 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -337,7 +341,24 @@ public final class Puzzle {
 	}
 
 	public static void main(String[] args) throws IOException {
-		BufferedImage image = ImageIO.read(new File("266010_2014-06-29_00001.png"));
-		System.out.println(Puzzle.fromImage(image));
+		try (DirectoryStream<Path> directory = Files.newDirectoryStream(Paths.get("."), "*.png")) {
+			for (Path imagePath : directory) {
+				trySolve(imagePath);
+			}
+		}
+//		trySolve(Paths.get("266010_2014-08-23_00009.png"));
+	}
+
+	private static void trySolve(Path imagePath) throws IOException {
+		BufferedImage image = ImageIO.read(new File(imagePath.toString()));
+		Puzzle puzzle = Puzzle.fromImage(image);
+		System.out.println(imagePath);
+		System.out.println(puzzle);
+		Set<List<Node>> paths = Solver.solve(puzzle);
+		if (paths == null)
+			System.out.println("FAILED");
+		else
+			for (List<Node> path : paths)
+				System.out.println(path);
 	}
 }
