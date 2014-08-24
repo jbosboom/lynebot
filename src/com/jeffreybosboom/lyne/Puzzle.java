@@ -53,8 +53,15 @@ public final class Puzzle {
 	private static Puzzle initialState(Node[][] nodes) {
 		assert Arrays.stream(nodes).mapToInt(x -> x.length).distinct().count() == 1 : "array not rectangular";
 		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> builder = ImmutableTable.builder();
-		ImmutableSet<Node.Kind> allPossibilities = ImmutableSet.of(
-				Node.Kind.TRIANGLE, Node.Kind.DIAMOND, Node.Kind.SQUARE, Node.Kind.NONE);
+		//Only include colors if nodes of that color are present.
+		ImmutableSet<Node.Kind> allPossibilities = ImmutableSet.<Node.Kind>builder()
+				.addAll(Arrays.stream(nodes)
+						.flatMap(Arrays::stream)
+						.filter(x -> x != null)
+						.map(Node::kind)
+						.filter(Node.Kind::isColored).iterator())
+				.add(Node.Kind.NONE)
+				.build();
 		for (int x = 0; x < nodes.length; ++x)
 			for (int y = 0; y < nodes[0].length; ++y) {
 				Node n = nodes[x][y];
