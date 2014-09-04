@@ -21,6 +21,10 @@ public final class Pair<A, B> {
 		return new Pair<>(a, b);
 	}
 
+	public Pair<B, A> opposite() {
+		return new Pair<>(second, first);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null)

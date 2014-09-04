@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,26 +75,7 @@ public final class Puzzle {
 					builder.put(n, a, allPossibilities);
 				}
 			}
-		Puzzle retval = new Puzzle(nodes, builder.build());
-
-		for (Iterator<Pair<Node, Node>> i = retval.pairs().iterator(); i.hasNext();) {
-			Pair<Node, Node> p = i.next();
-			Set<Node.Kind> removals = Sets.difference(allPossibilities, initialEdgeSet(p.first, p.second));
-			for (Node.Kind k : removals)
-				retval = retval.remove(p.first, p.second, k);
-		}
-		return retval;
-	}
-	private static ImmutableSet<Node.Kind> initialEdgeSet(Node n, Node a) {
-		if (n.kind() == Node.Kind.OCTAGON && a.kind() == Node.Kind.OCTAGON)
-			return ImmutableSet.copyOf(Node.Kind.values());
-		if (n.kind().isColored() && a.kind() == Node.Kind.OCTAGON)
-			return ImmutableSet.of(n.kind(), Node.Kind.NONE);
-		if (n.kind() == Node.Kind.OCTAGON && a.kind().isColored())
-			return ImmutableSet.of(a.kind(), Node.Kind.NONE);
-		if (n.kind().isColored() && n.kind().equals(a.kind()))
-			return ImmutableSet.of(n.kind(), Node.Kind.NONE);
-		return ImmutableSet.of(Node.Kind.NONE);
+		return new Puzzle(nodes, builder.build());
 	}
 
 	public static Puzzle fromString(String str) {
@@ -171,6 +151,10 @@ public final class Puzzle {
 		return Puzzle.initialState(puzzle);
 	}
 
+	public Node at(int row, int col) {
+		return nodes[row][col];
+	}
+
 	public Stream<Node> nodes() {
 		return Arrays.stream(nodes).flatMap(Arrays::stream).filter(x -> x != null);
 	}
@@ -197,6 +181,7 @@ public final class Puzzle {
 
 	/**
 	 * Returns each pair of adjacent nodes exactly once.
+	 * TODO: should be named edges(), of course!
 	 * @return
 	 */
 	public Stream<Pair<Node, Node>> pairs() {
@@ -237,10 +222,13 @@ public final class Puzzle {
 				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
 		tableBuilder.put(p.first, p.second, newSet);
-		Puzzle result = new Puzzle(nodes, tableBuilder.build());
-		if (possibility == Node.Kind.NONE)
-			result = result.setCrossingEdgeToNone(a, b);
-		return result.desiredEdges(a).desiredEdges(b);
+		return new Puzzle(nodes, tableBuilder.build());
+	}
+
+	public Puzzle restrict(Node a, Node b, Set<Node.Kind> possibilities) {
+		ImmutableSet<Node.Kind> currentPossibilities = possibilities(a, b);
+		Set<Node.Kind> intersection = Sets.intersection(possibilities, currentPossibilities);
+		return set(a, b, intersection);
 	}
 
 	/**
@@ -257,82 +245,25 @@ public final class Puzzle {
 	 * @throws ContradictionException
 	 */
 	public Puzzle set(Node a, Node b, Node.Kind possibility) {
+		return set(a, b, ImmutableSet.of(possibility));
+	}
+
+	public Puzzle set(Node a, Node b, Set<Node.Kind> possibilities) {
+		//TODO: does this make sense?  will we always want restrict instead?
+		//maybe private?
 		Pair<Node, Node> p = Pair.sorted(a, b);
-		ImmutableSet<Node.Kind> possibilities = possibilities(a, b);
-		if (!possibilities.contains(possibility))
+		ImmutableSet<Node.Kind> currentPossibilities = possibilities(a, b);
+		if (possibilities.isEmpty() || !currentPossibilities.containsAll(possibilities))
 			throw new ContradictionException();
-		if (possibilities.equals(ImmutableSet.of(possibility)))
+		if (currentPossibilities.equals(possibilities))
 			return this;
 
 		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> tableBuilder = ImmutableTable.builder();
 		edgeSets.cellSet().stream()
 				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
-		tableBuilder.put(p.first, p.second, ImmutableSet.of(possibility));
-		Puzzle result = new Puzzle(nodes, tableBuilder.build());
-		if (possibility != Node.Kind.NONE)
-			result = result.setCrossingEdgeToNone(a, b);
-		return result.desiredEdges(a).desiredEdges(b);
-	}
-
-	/**
-	 * Applies desired-edges inference rules to the given node:
-	 * <ul>
-	 * <li> If the node desires N edges and there are N edges with only colored
-	 * possibilities, all other edges are set to NONE.
-	 * <li> If the node desires N edges and there are N-K edges with only
-	 * colored possibilities and K unknown edges, NONE is removed from all
-	 * unknown edges.
-	 * </ul>
-	 * @param a
-	 * @return
-	 * @throws ContradictionException
-	 */
-	private Puzzle desiredEdges(Node a) {
-		List<Node> neighbors = neighbors(a).collect(Collectors.toList());
-		int knownColored = 0, knownNone = 0;
-		for (Node n : neighbors) {
-			ImmutableSet<Node.Kind> possibilities = possibilities(a, n);
-			if (!possibilities.contains(Node.Kind.NONE))
-				++knownColored;
-			if (possibilities.stream().noneMatch(Node.Kind::isColored))
-				++knownNone;
-		}
-		int unknown = neighbors.size() - knownColored - knownNone;
-
-		if (knownColored > a.desiredEdges())
-			throw new ContradictionException();
-		if (knownColored + unknown < a.desiredEdges())
-			throw new ContradictionException();
-		if (unknown == 0) //nothing to do here
-			return this;
-
-		Puzzle retval = this;
-		//All unknown possibilities are NONE.
-		if (knownColored == a.desiredEdges())
-			for (Node n : neighbors) {
-				ImmutableSet<Node.Kind> possibilities = possibilities(a, n);
-				if (possibilities.contains(Node.Kind.NONE) && possibilities.stream().anyMatch(Node.Kind::isColored))
-					retval = retval.set(a, n, Node.Kind.NONE);
-			}
-		//All unknown possibilities are not NONE (but we don't know which color).
-		else if (knownColored + unknown == a.desiredEdges())
-			for (Node n : neighbors) {
-				ImmutableSet<Node.Kind> possibilities = possibilities(a, n);
-				if (possibilities.contains(Node.Kind.NONE) && possibilities.stream().anyMatch(Node.Kind::isColored))
-					retval = retval.remove(a, n, Node.Kind.NONE);
-			}
-		return retval;
-	}
-
-	private Puzzle setCrossingEdgeToNone(Node a, Node b) {
-		if (a.row() == b.row() || a.col() == b.col()) //no crossing edge
-			return this;
-		Pair<Node, Node> p = Pair.sorted(a, b);
-		//Canonical order and not-same-row/col enforces it's a down-right edge.
-		Node ac = nodes[p.first.row()+1][p.first.col()], bc = nodes[p.second.row()-1][p.second.col()];
-		if (ac == null || bc == null) return this;
-		return set(ac, bc, Node.Kind.NONE);
+		tableBuilder.put(p.first, p.second, ImmutableSet.copyOf(possibilities));
+		return new Puzzle(nodes, tableBuilder.build());
 	}
 
 	@Override

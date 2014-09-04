@@ -8,7 +8,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.jeffreybosboom.lyne.rules.*;
 
 /**
  * Solves puzzles.
@@ -16,23 +18,38 @@ import java.util.stream.Collectors;
  * @since 8/23/2014
  */
 public class Solver {
+	private static final Function<Puzzle, Puzzle> ONE_TIME_INFERENCE =
+			new ColorColorRule()
+			.andThen(new ColorOctagonRule())
+			.andThen(new TerminalTerminalRule());
+	private static final Function<Puzzle, Puzzle> MULTI_TIME_INFERENCE =
+			fixpoint(new DesiredEdgesRule())
+			.andThen(fixpoint(new CrossingEdgesRule()));
+
 	/**
 	 * Solves the given puzzle using a backtracking search.
 	 * @param p the puzzle to search
 	 * @return solution paths (one per color), or null
 	 */
 	public static Set<List<Node>> solve(Puzzle p) {
+		return solve_recurse(ONE_TIME_INFERENCE.apply(p));
+	}
+
+	private static Set<List<Node>> solve_recurse(Puzzle p) {
+		p = MULTI_TIME_INFERENCE.apply(p);
+		final Puzzle p_ = p;
 		Optional<Pair<Node, Node>> maybe = p.pairs()
-				.filter(a -> p.possibilities(a.first, a.second).size() > 1)
-				.sorted((a, b) -> Integer.compare(p.possibilities(a.first, a.second).size(), p.possibilities(b.first, b.second).size()))
+				.filter(a -> p_.possibilities(a.first, a.second).size() > 1)
+				.sorted((a, b) -> Integer.compare(p_.possibilities(a.first, a.second).size(), p_.possibilities(b.first, b.second).size()))
 				.findFirst();
 		if (!maybe.isPresent())
 			return solutionPaths(p);
+
 		Pair<Node, Node> edge = maybe.get();
 		ImmutableSet<Node.Kind> possibilities = p.possibilities(edge.first, edge.second);
 		for (Node.Kind k : possibilities)
 			try {
-				return solve(p.set(edge.first, edge.second, k));
+				return solve_recurse(p.set(edge.first, edge.second, k));
 			} catch (ContradictionException e) {}
 		return null;
 	}
@@ -83,5 +100,16 @@ public class Solver {
 			usedEdges.remove(edge);
 		}
 		return null;
+	}
+
+	private static <T> Function<T, ? extends T> fixpoint(Function<T, ? extends T> f) {
+		return (t) -> {
+			T current = t;
+			while (true) {
+				T next = f.apply(current);
+				if (current.equals(next)) return current;
+				current = next;
+			}
+		};
 	}
 }
