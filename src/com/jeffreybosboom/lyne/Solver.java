@@ -18,13 +18,15 @@ import com.jeffreybosboom.lyne.rules.*;
  * @since 8/23/2014
  */
 public class Solver {
-	private static final Function<Puzzle, Puzzle> ONE_TIME_INFERENCE =
-			new ColorColorRule()
+	private static final Function<Puzzle, Puzzle> ONE_TIME_INFERENCE = Function.<Puzzle>identity()
+			.andThen(new ColorColorRule())
 			.andThen(new ColorOctagonRule())
-			.andThen(new TerminalTerminalRule());
-	private static final Function<Puzzle, Puzzle> MULTI_TIME_INFERENCE =
-			fixpoint(new DesiredEdgesRule())
-			.andThen(fixpoint(new CrossingEdgesRule()));
+			.andThen(new TerminalTerminalRule())
+			;
+	private static final Function<Puzzle, Puzzle> MULTI_TIME_INFERENCE = Function.<Puzzle>identity()
+			.andThen(fixpoint(new DesiredEdgesRule()))
+			.andThen(fixpoint(new CrossingEdgesRule()))
+			;
 
 	/**
 	 * Solves the given puzzle using a backtracking search.
@@ -102,12 +104,12 @@ public class Solver {
 		return null;
 	}
 
-	private static <T> Function<T, ? extends T> fixpoint(Function<T, ? extends T> f) {
+	private static <T, R extends T> Function<T, R> fixpoint(Function<T, R> f) {
 		return (t) -> {
 			T current = t;
 			while (true) {
-				T next = f.apply(current);
-				if (current.equals(next)) return current;
+				R next = f.apply(current);
+				if (current.equals(next)) return next;
 				current = next;
 			}
 		};
