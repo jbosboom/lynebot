@@ -17,7 +17,7 @@ import java.util.Iterator;
 public final class ColorColorRule implements InferenceRule {
 	@Override
 	public Puzzle apply(Puzzle puzzle) {
-		for (Iterator<Pair<Node, Node>> it = puzzle.pairs().iterator(); it.hasNext();) {
+		for (Iterator<Pair<Node, Node>> it = puzzle.edges().iterator(); it.hasNext();) {
 			Pair<Node, Node> edge = it.next();
 			if (!edge.first.kind().isColored() || !edge.second.kind().isColored()) continue;
 			if (edge.first.kind() != edge.second.kind())

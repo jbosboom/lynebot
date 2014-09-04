@@ -181,10 +181,9 @@ public final class Puzzle {
 
 	/**
 	 * Returns each pair of adjacent nodes exactly once.
-	 * TODO: should be named edges(), of course!
 	 * @return
 	 */
-	public Stream<Pair<Node, Node>> pairs() {
+	public Stream<Pair<Node, Node>> edges() {
 		return nodes().filter(n -> n != null).flatMap(a -> neighbors(a).map(b -> Pair.sorted(a, b))).distinct();
 	}
 

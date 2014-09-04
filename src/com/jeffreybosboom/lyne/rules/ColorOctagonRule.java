@@ -18,7 +18,7 @@ public final class ColorOctagonRule implements InferenceRule {
 	@Override
 	public Puzzle apply(Puzzle puzzle) {
 		for (Iterator<Pair<Node, Node>> it =
-				Stream.concat(puzzle.pairs(), puzzle.pairs().map(Pair::opposite)).iterator();
+				Stream.concat(puzzle.edges(), puzzle.edges().map(Pair::opposite)).iterator();
 				it.hasNext();) {
 			Pair<Node, Node> edge = it.next();
 			if (edge.first.kind() == Node.Kind.OCTAGON && edge.second.kind().isColored())

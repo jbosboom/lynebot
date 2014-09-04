@@ -39,7 +39,7 @@ public class Solver {
 	private static Set<List<Node>> solve_recurse(Puzzle p) {
 		p = MULTI_TIME_INFERENCE.apply(p);
 		final Puzzle p_ = p;
-		Optional<Pair<Node, Node>> maybe = p.pairs()
+		Optional<Pair<Node, Node>> maybe = p.edges()
 				.filter(a -> p_.possibilities(a.first, a.second).size() > 1)
 				.sorted((a, b) -> Integer.compare(p_.possibilities(a.first, a.second).size(), p_.possibilities(b.first, b.second).size()))
 				.findFirst();
@@ -66,7 +66,7 @@ public class Solver {
 	 */
 	private static Set<List<Node>> solutionPaths(Puzzle puzzle) {
 		puzzle.getClass();
-		checkArgument(puzzle.pairs().allMatch(a -> puzzle.possibilities(a.first, a.second).size() == 1));
+		checkArgument(puzzle.edges().allMatch(a -> puzzle.possibilities(a.first, a.second).size() == 1));
 		ImmutableSet.Builder<List<Node>> paths = ImmutableSet.builder();
 		for (Iterator<Pair<Node, Node>> it = puzzle.terminals().iterator(); it.hasNext();) {
 			Pair<Node, Node> pair = it.next();
