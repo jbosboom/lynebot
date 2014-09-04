@@ -37,9 +37,14 @@ public final class Puzzle {
 		{1, -1}, {1, 0}, {1, 1},
 	};
 	private final Node[][] nodes;
+	private final ImmutableSet<Pair<Node, Node>> edges;
 	private final ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets;
 	private Puzzle(Node[][] nodes, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
 		this.nodes = nodes;
+		this.edges = ImmutableSet.copyOf(nodes().
+				filter(n -> n != null)
+				.flatMap(a -> neighbors(a).map(b -> Pair.sorted(a, b)))
+				.iterator());
 		this.edgeSets = edgeSets;
 	}
 
@@ -184,7 +189,7 @@ public final class Puzzle {
 	 * @return
 	 */
 	public Stream<Pair<Node, Node>> edges() {
-		return nodes().filter(n -> n != null).flatMap(a -> neighbors(a).map(b -> Pair.sorted(a, b))).distinct();
+		return edges.stream();
 	}
 
 	public ImmutableSet<Node.Kind> possibilities(Node a, Node b) {
