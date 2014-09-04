@@ -65,9 +65,11 @@ public class Solver {
 
 		Iterator<Node> maybeNext = puzzle.neighbors(cur)
 				.filter(n -> puzzle.possibilities(cur, n).contains(dest.kind()))
+				.filter(n -> !usedEdges.contains(Pair.sorted(cur, n)))
+				//don't return to a terminal we've already visited
+				.filter(n -> !(n.isTerminal() && path.contains(n)))
 				//ensure we pick the other terminal last
 				.sorted((n1, n2) -> n1 == dest ? 1 : n2 == dest ? -1 : 0)
-				.filter(n -> !usedEdges.contains(Pair.sorted(cur, n)))
 				.iterator();
 		while (maybeNext.hasNext()) {
 			Node next = maybeNext.next();
