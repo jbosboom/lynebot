@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import com.jeffreybosboom.lyne.rules.*;
 
 /**
@@ -68,14 +67,16 @@ public class Solver {
 	private static Set<List<Node>> solutionPaths(Puzzle puzzle) {
 		puzzle.getClass();
 		checkArgument(puzzle.pairs().allMatch(a -> puzzle.possibilities(a.first, a.second).size() == 1));
-		return puzzle.terminals().map(pair -> {
+		ImmutableSet.Builder<List<Node>> paths = ImmutableSet.builder();
+		for (Iterator<Pair<Node, Node>> it = puzzle.terminals().iterator(); it.hasNext();) {
+			Pair<Node, Node> pair = it.next();
 			List<Node> path = new ArrayList<>();
 			path.add(pair.first);
 			path = findPath(puzzle, path, pair.second, new HashSet<>());
-			if (path == null)
-				throw new ContradictionException();
-			return path;
-		}).collect(Collectors.toSet());
+			if (path == null) return null;
+			paths.add(path);
+		}
+		return paths.build();
 	}
 
 	private static List<Node> findPath(Puzzle puzzle, List<Node> path, Node dest, Set<Pair<Node, Node>> usedEdges) {
