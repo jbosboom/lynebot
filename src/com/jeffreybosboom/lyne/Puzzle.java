@@ -48,6 +48,12 @@ public final class Puzzle {
 		this.edgeSets = edgeSets;
 	}
 
+	private Puzzle(Puzzle puzzle, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
+		this.nodes = puzzle.nodes;
+		this.edges = puzzle.edges;
+		this.edgeSets = edgeSets;
+	}
+
 	/**
 	 * Creates a puzzle from the given nodes, performing inference on initial
 	 * edge sets based on node kinds.
@@ -226,7 +232,7 @@ public final class Puzzle {
 				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
 		tableBuilder.put(p.first, p.second, newSet);
-		return new Puzzle(nodes, tableBuilder.build());
+		return new Puzzle(this, tableBuilder.build());
 	}
 
 	public Puzzle restrict(Node a, Node b, Set<Node.Kind> possibilities) {
@@ -267,7 +273,7 @@ public final class Puzzle {
 				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
 				.forEachOrdered(tableBuilder::put);
 		tableBuilder.put(p.first, p.second, ImmutableSet.copyOf(possibilities));
-		return new Puzzle(nodes, tableBuilder.build());
+		return new Puzzle(this, tableBuilder.build());
 	}
 
 	@Override
