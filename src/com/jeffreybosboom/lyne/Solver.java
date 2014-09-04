@@ -51,7 +51,8 @@ public class Solver {
 		ImmutableSet<Node.Kind> possibilities = p.possibilities(edge.first, edge.second);
 		for (Node.Kind k : possibilities)
 			try {
-				return solve_recurse(p.set(edge.first, edge.second, k));
+				Set<List<Node>> recurse = solve_recurse(p.set(edge.first, edge.second, k));
+				if (recurse != null) return recurse;
 			} catch (ContradictionException e) {}
 		return null;
 	}
