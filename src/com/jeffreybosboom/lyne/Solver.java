@@ -1,7 +1,10 @@
 package com.jeffreybosboom.lyne;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multiset;
+import com.jeffreybosboom.lyne.rules.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -9,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import com.jeffreybosboom.lyne.rules.*;
 
 /**
  * Solves puzzles.
@@ -68,16 +70,22 @@ public class Solver {
 	private static Set<List<Node>> solutionPaths(Puzzle puzzle) {
 		puzzle.getClass();
 		checkArgument(puzzle.edges().allMatch(a -> puzzle.possibilities(a.first, a.second).size() == 1));
-		ImmutableSet.Builder<List<Node>> paths = ImmutableSet.builder();
+		ImmutableSet.Builder<List<Node>> pathsBuilder = ImmutableSet.builder();
 		for (Iterator<Pair<Node, Node>> it = puzzle.terminals().iterator(); it.hasNext();) {
 			Pair<Node, Node> pair = it.next();
 			List<Node> path = new ArrayList<>();
 			path.add(pair.first);
 			path = findPath(puzzle, path, pair.second, new HashSet<>());
 			if (path == null) return null;
-			paths.add(path);
+			pathsBuilder.add(path);
 		}
-		return paths.build();
+		ImmutableSet<List<Node>> paths = pathsBuilder.build();
+		Multiset<Node> counts = HashMultiset.create();
+		paths.stream().forEachOrdered(counts::addAll);
+		//ensure each node appears enough times over all the paths
+		if (!puzzle.nodes().allMatch(n -> counts.count(n) == (n.desiredEdges()+1)/2))
+			return null;
+		return paths;
 	}
 
 	private static List<Node> findPath(Puzzle puzzle, List<Node> path, Node dest, Set<Pair<Node, Node>> usedEdges) {
