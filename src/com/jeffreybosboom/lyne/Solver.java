@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multiset;
 import com.jeffreybosboom.lyne.rules.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -90,7 +91,7 @@ public class Solver {
 
 	private static List<Node> findPath(Puzzle puzzle, List<Node> path, Node dest, Set<Pair<Node, Node>> usedEdges) {
 		Node cur = path.get(path.size()-1);
-		if (cur.equals(dest))
+		if (cur.equals(dest) && puzzle.nodes().filter(n -> n.kind() == dest.kind()).allMatch(n -> Collections.frequency(path, n) == 1))
 			return path;
 
 		Iterator<Node> maybeNext = puzzle.neighbors(cur)
