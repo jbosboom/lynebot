@@ -10,6 +10,7 @@ import java.util.BitSet;
 import java.util.Deque;
 import java.util.IntSummaryStatistics;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -37,10 +38,15 @@ public final class Region {
 		{0, -1}, {0, 1},
 		{1, -1}, {1, 0}, {1, 1},
 	};
-	public static ImmutableSet<Region> connectedComponents(BufferedImage image) {
-		ImmutableSet.Builder<Region> builder = ImmutableSet.builder();
+	public static ImmutableSet<Region> connectedComponents(BufferedImage image, Set<Integer> interestingColors) {
 		final int imageSize = image.getWidth() * image.getHeight();
 		BitSet processed = new BitSet(imageSize);
+		for (int x = 0; x < image.getWidth(); ++x)
+			for (int y = 0; y < image.getHeight(); ++y)
+				if (!interestingColors.contains(image.getRGB(x, y)))
+					processed.set(y * image.getWidth() + x);
+
+		ImmutableSet.Builder<Region> builder = ImmutableSet.builder();
 		int lastClearBit = 0;
 		while ((lastClearBit = processed.nextClearBit(lastClearBit)) != imageSize) {
 			int fillY = lastClearBit / image.getWidth(), fillX = lastClearBit % image.getWidth();

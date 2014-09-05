@@ -1,6 +1,7 @@
 package com.jeffreybosboom.lyne;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 /**
  *
@@ -19,6 +20,9 @@ public final class Colors {
 	public static final int TERMINAL_CENTER = rgb(233, 241, 223);
 
 	public static final ImmutableMap<Integer, Node.Kind> NODE_COLORS = ImmutableMap.of(TRIANGLE, Node.Kind.TRIANGLE, DIAMOND, Node.Kind.DIAMOND, SQUARE, Node.Kind.SQUARE, OCTAGON, Node.Kind.OCTAGON);
+	public static final ImmutableSet<Integer> LYNE_COLORS = ImmutableSet.of(
+			GAME_BOARDER, TRIANGLE, DIAMOND, SQUARE, OCTAGON, PIP, TERMINAL_CENTER
+	);
 
 	private static int rgb(int r, int g, int b) {
 		return 0xFF << 24 | r << 16 | g << 8 | b;

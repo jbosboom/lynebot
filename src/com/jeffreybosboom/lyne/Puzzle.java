@@ -3,13 +3,7 @@ package com.jeffreybosboom.lyne;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
 import com.google.common.collect.Sets;
-import com.google.common.collect.TreeRangeSet;
-import com.jeffreybosboom.region.Region;
-import com.jeffreybosboom.region.Region.Point;
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +34,7 @@ public final class Puzzle {
 	private final ImmutableMap<Node, ImmutableSet<Node>> neighbors;
 	private final ImmutableSet<Pair<Node, Node>> edges;
 	private final ImmutableMap<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSets;
-	private Puzzle(Node[][] nodes) {
+	public Puzzle(Node[][] nodes) {
 		assert Arrays.stream(nodes).mapToInt(x -> x.length).distinct().count() == 1 : "array not rectangular";
 		this.nodes = nodes;
 
@@ -114,58 +108,6 @@ public final class Puzzle {
 				}
 			}
 		return new Puzzle(nodes);
-	}
-
-	//TODO: this actually belongs in a UI controller class, as we need to
-	//remember where each node is on screen
-	private static final int TOLERANCE = 10;
-	public static Puzzle fromImage(BufferedImage image) {
-		ImmutableSet<Region> regions = Region.connectedComponents(image);
-		List<Region> nodeRegions = regions.stream()
-				.filter(r -> Colors.NODE_COLORS.keySet().contains(r.color()))
-				.collect(Collectors.toList());
-		//terminal markers and pips are inside node regions, so must be smaller
-		int maxSize = nodeRegions.stream().mapToInt(r -> r.points().size()).max().getAsInt();
-		List<Region> terminalRegions = regions.stream()
-				.filter(r -> r.points().size() < maxSize)
-				.filter(r -> r.color() == Colors.TERMINAL_CENTER)
-				.collect(Collectors.toList());
-		List<Region> pipRegions = regions.stream()
-				.filter(r -> r.points().size() < maxSize)
-				.filter(r -> r.color() == Colors.PIP)
-				.collect(Collectors.toList());
-
-		RangeSet<Integer> rowRanges = TreeRangeSet.create();
-		nodeRegions.stream()
-				.map(Region::centroid)
-				.mapToInt(Point::y)
-				.mapToObj(i -> Range.closed(i - TOLERANCE, i + TOLERANCE))
-				.forEachOrdered(rowRanges::add);
-		List<Range<Integer>> rows = rowRanges.asRanges().stream().collect(Collectors.toList());
-		RangeSet<Integer> colRanges = TreeRangeSet.create();
-		nodeRegions.stream()
-				.map(Region::centroid)
-				.mapToInt(Point::x)
-				.mapToObj(i -> Range.closed(i - TOLERANCE, i + TOLERANCE))
-				.forEachOrdered(colRanges::add);
-		List<Range<Integer>> cols = colRanges.asRanges().stream().collect(Collectors.toList());
-
-		Node[][] puzzle = new Node[rows.size()][cols.size()];
-		for (Region r : nodeRegions) {
-			Point c = r.centroid();
-			Rectangle b = r.boundingBox();
-			int row = rows.indexOf(rowRanges.rangeContaining(c.y()));
-			int col = cols.indexOf(colRanges.rangeContaining(c.x()));
-			Node.Kind kind = Colors.NODE_COLORS.get(r.color());
-			if (kind == Node.Kind.OCTAGON) {
-				int pips = (int)pipRegions.stream().filter(p -> b.contains(p.boundingBox())).count();
-				puzzle[row][col] = Node.octagon(row, col, pips);
-			} else {
-				boolean terminal = terminalRegions.stream().anyMatch(t -> b.contains(t.boundingBox()));
-				puzzle[row][col] = terminal ? Node.terminal(row, col, kind) : Node.nonterminal(row, col, kind);
-			}
-		}
-		return new Puzzle(puzzle);
 	}
 
 	public Node at(int row, int col) {
@@ -290,7 +232,7 @@ public final class Puzzle {
 
 	private static void trySolve(Path imagePath) throws IOException {
 		BufferedImage image = ImageIO.read(new File(imagePath.toString()));
-		Puzzle puzzle = Puzzle.fromImage(image);
+		Puzzle puzzle = Effector.parseImage(image).first;
 		System.out.println(imagePath);
 		System.out.println(puzzle);
 		Set<List<Node>> paths = Solver.solve(puzzle);
