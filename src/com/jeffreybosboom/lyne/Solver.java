@@ -25,6 +25,7 @@ public class Solver {
 	private static final Function<Puzzle, Puzzle> MULTI_TIME_INFERENCE = Function.<Puzzle>identity()
 			.andThen(fixpoint(new DesiredEdgesRule()))
 			.andThen(fixpoint(new CrossingEdgesRule()))
+			.andThen(fixpoint(new OctagonOneEdgeOfColorRule()))
 			;
 
 	/**
