@@ -81,6 +81,9 @@ public final class Puzzle {
 	private Puzzle withEdgeSet(Pair<Node, Node> edge, ImmutableSet<Node.Kind> newEdgeSet) {
 		assert neighbors(edge.first).anyMatch(Predicate.isEqual(edge.second));
 		assert edge.first.compareTo(edge.second) < 0;
+		assert edgeSets.containsKey(edge) : "not an edge: "+edge;
+		assert !newEdgeSet.contains(Node.Kind.OCTAGON);
+		assert !newEdgeSet.isEmpty();
 		ImmutableMap.Builder<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSetBuilder = ImmutableMap.builder();
 		edgeSets.entrySet().stream()
 				.filter(e -> !e.getKey().equals(edge))
