@@ -22,11 +22,11 @@ public class Solver {
 			.andThen(new ColorOctagonRule())
 			.andThen(new TerminalTerminalRule())
 			;
-	private static final Function<Puzzle, Puzzle> MULTI_TIME_INFERENCE = Function.<Puzzle>identity()
+	private static final Function<Puzzle, Puzzle> MULTI_TIME_INFERENCE = fixpoint(Function.<Puzzle>identity()
 			.andThen(fixpoint(new DesiredEdgesRule()))
 			.andThen(fixpoint(new CrossingEdgesRule()))
 			.andThen(fixpoint(new OctagonOneEdgeOfColorRule()))
-			;
+	);
 
 	/**
 	 * Solves the given puzzle using a backtracking search.
