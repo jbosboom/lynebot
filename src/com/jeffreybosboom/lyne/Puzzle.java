@@ -3,7 +3,6 @@ package com.jeffreybosboom.lyne;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.Sets;
@@ -21,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
@@ -31,7 +31,6 @@ import javax.imageio.ImageIO;
  * @since 8/8/2014
  */
 public final class Puzzle {
-	private static final int[][] BUILD_ADJUST = {{0, 1}, {1, -1}, {1, 0}, {1, 1}};
 	private static final int[][] NEIGHBORHOOD = {
 		{-1, -1}, {-1, 0}, {-1, 1},
 		{0, -1}, {0, 1},
@@ -40,12 +39,14 @@ public final class Puzzle {
 	private final Node[][] nodes;
 	private final ImmutableMap<Node, ImmutableSet<Node>> neighbors;
 	private final ImmutableSet<Pair<Node, Node>> edges;
-	private final ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets;
-	private Puzzle(Node[][] nodes, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
+	private final ImmutableMap<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSets;
+	private Puzzle(Node[][] nodes) {
+		assert Arrays.stream(nodes).mapToInt(x -> x.length).distinct().count() == 1 : "array not rectangular";
 		this.nodes = nodes;
-		ImmutableMap.Builder<Node, ImmutableSet<Node>> builder = ImmutableMap.builder();
+
+		ImmutableMap.Builder<Node, ImmutableSet<Node>> neighborsBuilder = ImmutableMap.builder();
 		nodes().forEachOrdered(n -> {
-			builder.put(n, ImmutableSet.copyOf(
+			neighborsBuilder.put(n, ImmutableSet.copyOf(
 					Arrays.stream(NEIGHBORHOOD)
 							.map(p -> new int[]{n.row() + p[0], n.col() + p[1]})
 							.filter(p -> 0 <= p[0] && p[0] < nodes.length)
@@ -55,32 +56,15 @@ public final class Puzzle {
 							.iterator()
 			));
 		});
-		this.neighbors = builder.build();
+		this.neighbors = neighborsBuilder.build();
+
 		this.edges = ImmutableSet.copyOf(nodes().
 				filter(n -> n != null)
 				.flatMap(a -> neighbors(a).map(b -> Pair.sorted(a, b)))
 				.iterator());
-		this.edgeSets = edgeSets;
-	}
 
-	private Puzzle(Puzzle puzzle, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
-		this.nodes = puzzle.nodes;
-		this.edges = puzzle.edges;
-		this.neighbors = puzzle.neighbors;
-		this.edgeSets = edgeSets;
-	}
-
-	/**
-	 * Creates a puzzle from the given nodes, performing inference on initial
-	 * edge sets based on node kinds.
-	 * @param nodes
-	 * @return
-	 */
-	private static Puzzle initialState(Node[][] nodes) {
-		assert Arrays.stream(nodes).mapToInt(x -> x.length).distinct().count() == 1 : "array not rectangular";
-		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> builder = ImmutableTable.builder();
 		//Only include colors if nodes of that color are present.
-		ImmutableSet<Node.Kind> allPossibilities = ImmutableSet.<Node.Kind>builder()
+		ImmutableSet<Node.Kind> maximalEdgeSet = ImmutableSet.<Node.Kind>builder()
 				.addAll(Arrays.stream(nodes)
 						.flatMap(Arrays::stream)
 						.filter(x -> x != null)
@@ -88,21 +72,27 @@ public final class Puzzle {
 						.filter(Node.Kind::isColored).iterator())
 				.add(Node.Kind.NONE)
 				.build();
-		for (int x = 0; x < nodes.length; ++x)
-			for (int y = 0; y < nodes[0].length; ++y) {
-				Node n = nodes[x][y];
-				if (n == null) continue;
-				assert n.row() == x;
-				assert n.col() == y;
-				for (int[] adj : BUILD_ADJUST) {
-					int xa = x + adj[0], ya = y + adj[1];
-					if (!(0 <= xa && xa < nodes.length && 0 <= ya && ya < nodes[0].length)) continue;
-					Node a = nodes[xa][ya];
-					if (a == null) continue;
-					builder.put(n, a, allPossibilities);
-				}
-			}
-		return new Puzzle(nodes, builder.build());
+		ImmutableMap.Builder<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSetsBuilder = ImmutableMap.builder();
+		edges().forEachOrdered(e -> edgeSetsBuilder.put(e, maximalEdgeSet));
+		this.edgeSets = edgeSetsBuilder.build();
+	}
+
+	private Puzzle(Puzzle puzzle, ImmutableMap<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSets) {
+		this.nodes = puzzle.nodes;
+		this.edges = puzzle.edges;
+		this.neighbors = puzzle.neighbors;
+		this.edgeSets = edgeSets;
+	}
+
+	private Puzzle withEdgeSet(Pair<Node, Node> edge, ImmutableSet<Node.Kind> newEdgeSet) {
+		assert neighbors(edge.first).anyMatch(Predicate.isEqual(edge.second));
+		assert edge.first.compareTo(edge.second) < 0;
+		ImmutableMap.Builder<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSetBuilder = ImmutableMap.builder();
+		edgeSets.entrySet().stream()
+				.filter(e -> !e.getKey().equals(edge))
+				.forEachOrdered(edgeSetBuilder::put);
+		edgeSetBuilder.put(edge, newEdgeSet);
+		return new Puzzle(this, edgeSetBuilder.build());
 	}
 
 	public static Puzzle fromString(String str) {
@@ -123,7 +113,7 @@ public final class Puzzle {
 							Node.nonterminal(row, col, kind);
 				}
 			}
-		return initialState(nodes);
+		return new Puzzle(nodes);
 	}
 
 	//TODO: this actually belongs in a UI controller class, as we need to
@@ -175,7 +165,7 @@ public final class Puzzle {
 				puzzle[row][col] = terminal ? Node.terminal(row, col, kind) : Node.nonterminal(row, col, kind);
 			}
 		}
-		return Puzzle.initialState(puzzle);
+		return new Puzzle(puzzle);
 	}
 
 	public Node at(int row, int col) {
@@ -211,7 +201,7 @@ public final class Puzzle {
 
 	public ImmutableSet<Node.Kind> possibilities(Node a, Node b) {
 		Pair<Node, Node> p = Pair.sorted(a, b);
-		return edgeSets.get(p.first, p.second);
+		return edgeSets.get(p);
 	}
 
 	/**
@@ -238,12 +228,7 @@ public final class Puzzle {
 
 		ImmutableSet<Node.Kind> newSet = ImmutableSet.copyOf(
 				possibilities.stream().filter(x -> x != possibility).iterator());
-		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> tableBuilder = ImmutableTable.builder();
-		edgeSets.cellSet().stream()
-				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
-				.forEachOrdered(tableBuilder::put);
-		tableBuilder.put(p.first, p.second, newSet);
-		return new Puzzle(this, tableBuilder.build());
+		return withEdgeSet(p, newSet);
 	}
 
 	public Puzzle restrict(Node a, Node b, Set<Node.Kind> possibilities) {
@@ -279,12 +264,7 @@ public final class Puzzle {
 		if (currentPossibilities.equals(possibilities))
 			return this;
 
-		ImmutableTable.Builder<Node, Node, ImmutableSet<Node.Kind>> tableBuilder = ImmutableTable.builder();
-		edgeSets.cellSet().stream()
-				.filter(c -> !(c.getRowKey().equals(p.first) && c.getColumnKey().equals(p.second)))
-				.forEachOrdered(tableBuilder::put);
-		tableBuilder.put(p.first, p.second, ImmutableSet.copyOf(possibilities));
-		return new Puzzle(this, tableBuilder.build());
+		return withEdgeSet(p, ImmutableSet.copyOf(possibilities));
 	}
 
 	@Override
