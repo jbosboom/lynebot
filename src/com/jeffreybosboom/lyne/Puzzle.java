@@ -1,6 +1,7 @@
 package com.jeffreybosboom.lyne;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Range;
@@ -37,10 +38,24 @@ public final class Puzzle {
 		{1, -1}, {1, 0}, {1, 1},
 	};
 	private final Node[][] nodes;
+	private final ImmutableMap<Node, ImmutableSet<Node>> neighbors;
 	private final ImmutableSet<Pair<Node, Node>> edges;
 	private final ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets;
 	private Puzzle(Node[][] nodes, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
 		this.nodes = nodes;
+		ImmutableMap.Builder<Node, ImmutableSet<Node>> builder = ImmutableMap.builder();
+		nodes().forEachOrdered(n -> {
+			builder.put(n, ImmutableSet.copyOf(
+					Arrays.stream(NEIGHBORHOOD)
+							.map(p -> new int[]{n.row() + p[0], n.col() + p[1]})
+							.filter(p -> 0 <= p[0] && p[0] < nodes.length)
+							.filter(p -> 0 <= p[1] && p[1] < nodes[0].length)
+							.map(p -> nodes[p[0]][p[1]])
+							.filter(x -> x != null)
+							.iterator()
+			));
+		});
+		this.neighbors = builder.build();
 		this.edges = ImmutableSet.copyOf(nodes().
 				filter(n -> n != null)
 				.flatMap(a -> neighbors(a).map(b -> Pair.sorted(a, b)))
@@ -51,6 +66,7 @@ public final class Puzzle {
 	private Puzzle(Puzzle puzzle, ImmutableTable<Node, Node, ImmutableSet<Node.Kind>> edgeSets) {
 		this.nodes = puzzle.nodes;
 		this.edges = puzzle.edges;
+		this.neighbors = puzzle.neighbors;
 		this.edgeSets = edgeSets;
 	}
 
@@ -182,12 +198,7 @@ public final class Puzzle {
 	}
 
 	public Stream<Node> neighbors(Node n) {
-		return Arrays.stream(NEIGHBORHOOD)
-				.map(p -> new int[]{n.row() + p[0], n.col() + p[1]})
-				.filter(p -> 0 <= p[0] && p[0] < nodes.length)
-				.filter(p -> 0 <= p[1] && p[1] < nodes[0].length)
-				.map(p -> nodes[p[0]][p[1]])
-				.filter(x -> x != null);
+		return neighbors.get(n).stream();
 	}
 
 	/**
