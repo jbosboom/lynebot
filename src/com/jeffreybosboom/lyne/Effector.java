@@ -30,7 +30,7 @@ public final class Effector {
 	private final Rectangle lyneRect;
 	public Effector() throws AWTException, IOException, InterruptedException {
 		this.robot = new Robot();
-		robot.setAutoDelay(100);
+		robot.setAutoDelay(25);
 
 		//compute the bounds of the virtual display
 		//based on the GraphicsConfiguration Javadoc example code
