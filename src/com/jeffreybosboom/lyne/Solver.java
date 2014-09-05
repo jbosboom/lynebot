@@ -82,7 +82,7 @@ public class Solver {
 
 	private static List<Node> findPath(Puzzle puzzle, List<Node> path, Node dest, Set<Pair<Node, Node>> usedEdges) {
 		Node cur = path.get(path.size()-1);
-		if (cur.equals(dest) && puzzle.nodes().filter(n -> n.kind() == dest.kind()).allMatch(path::contains))
+		if (cur.equals(dest))
 			return path;
 
 		Iterator<Node> maybeNext = puzzle.neighbors(cur)
