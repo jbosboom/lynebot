@@ -55,6 +55,9 @@ public final class Effector {
 		Set<List<Node>> solutionPaths = Solver.solve(parseImage.first);
 		ImmutableMap<Node, Region.Point> pointMap = parseImage.second;
 		for (List<Node> path : solutionPaths) {
+			System.out.println(path.stream()
+					.map(n -> String.format("%s (%d, %d)", n, n.row(), n.col()))
+					.collect(Collectors.joining(", ")));
 			mouseMove(pointMap.get(path.get(0)));
 			robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 			for (int i = 1; i < path.size(); ++i)
