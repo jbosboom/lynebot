@@ -4,20 +4,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.imageio.ImageIO;
 
 /**
  *
@@ -222,27 +213,5 @@ public final class Puzzle {
 			sb.append("\n");
 		}
 		return sb.toString().trim();
-	}
-
-	public static void main(String[] args) throws IOException {
-		try (DirectoryStream<Path> directory = Files.newDirectoryStream(Paths.get("."), "*.png")) {
-			for (Path imagePath : directory) {
-				trySolve(imagePath);
-			}
-		}
-//		trySolve(Paths.get("266010_2014-08-23_00009.png"));
-	}
-
-	private static void trySolve(Path imagePath) throws IOException {
-		BufferedImage image = ImageIO.read(new File(imagePath.toString()));
-		Puzzle puzzle = Effector.parseImage(image).first;
-		System.out.println(imagePath);
-		System.out.println(puzzle);
-		Set<List<Node>> paths = Solver.solve(puzzle);
-		if (paths == null)
-			System.out.println("FAILED");
-		else
-			for (List<Node> path : paths)
-				System.out.println(path);
 	}
 }
