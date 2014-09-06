@@ -22,7 +22,8 @@ import java.util.function.Function;
  * @author Jeffrey Bosboom <jbosboom@csail.mit.edu>
  * @since 8/23/2014
  */
-public class Solver {
+public final class Solver {
+	private Solver() {}
 	private static final Function<Puzzle, Puzzle> ONE_TIME_INFERENCE = Function.<Puzzle>identity()
 			.andThen(new ColorColorRule())
 			.andThen(new ColorOctagonRule())
