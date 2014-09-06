@@ -15,7 +15,10 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Solves puzzles.
+ * Solves puzzles.  Solver performs local inference about possibilities for each
+ * edge, falling back to backtracking search when no further inference is
+ * possible, until all edges are determined, at which point paths are
+ * constructed and checked for validity.
  * @author Jeffrey Bosboom <jbosboom@csail.mit.edu>
  * @since 8/23/2014
  */
