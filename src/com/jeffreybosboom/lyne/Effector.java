@@ -126,6 +126,9 @@ public final class Effector {
 
 	public static void main(String[] args) throws Throwable {
 		Effector effector = new Effector();
-		effector.playPuzzle();
+		for (int i = 0; i < 25; ++i) {
+			effector.playPuzzle();
+			Thread.sleep(2000);
+		}
 	}
 }
