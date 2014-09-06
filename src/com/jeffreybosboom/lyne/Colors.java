@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableSet;
 public final class Colors {
 	private Colors() {}
 
-	public static final int GAME_BOARDER = rgb(233, 241, 223);
+	public static final int GAME_BORDER = rgb(233, 241, 223);
 	public static final int TRIANGLE = rgb(168, 219, 168);
 	public static final int DIAMOND = rgb(59, 134, 134);
 	public static final int SQUARE = rgb(194, 120, 92);
@@ -21,7 +21,7 @@ public final class Colors {
 
 	public static final ImmutableMap<Integer, Node.Kind> NODE_COLORS = ImmutableMap.of(TRIANGLE, Node.Kind.TRIANGLE, DIAMOND, Node.Kind.DIAMOND, SQUARE, Node.Kind.SQUARE, OCTAGON, Node.Kind.OCTAGON);
 	public static final ImmutableSet<Integer> LYNE_COLORS = ImmutableSet.of(
-			GAME_BOARDER, TRIANGLE, DIAMOND, SQUARE, OCTAGON, PIP, TERMINAL_CENTER
+			GAME_BORDER, TRIANGLE, DIAMOND, SQUARE, OCTAGON, PIP, TERMINAL_CENTER
 	);
 
 	private static int rgb(int r, int g, int b) {

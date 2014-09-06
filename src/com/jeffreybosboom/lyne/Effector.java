@@ -41,7 +41,7 @@ public final class Effector {
 				virtualBounds = virtualBounds.union(gc.getBounds());
 
 		BufferedImage screenshot = robot.createScreenCapture(virtualBounds);
-		Region gameBorder = Region.connectedComponents(screenshot, ImmutableSet.of(Colors.GAME_BOARDER)).stream()
+		Region gameBorder = Region.connectedComponents(screenshot, ImmutableSet.of(Colors.GAME_BORDER)).stream()
 				.sorted(Comparator.<Region>comparingDouble(r -> r.boundingBox().getWidth() * r.boundingBox().getHeight()).reversed())
 				.findFirst().get();
 		this.lyneRect = gameBorder.boundingBox();
