@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 /**
- *
+ * Constants for Lyne colors, based on the default palette.
  * @author Jeffrey Bosboom <jbosboom@csail.mit.edu>
  * @since 8/17/2014
  */
