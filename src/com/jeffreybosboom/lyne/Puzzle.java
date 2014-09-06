@@ -170,9 +170,7 @@ public final class Puzzle {
 	}
 
 	public Puzzle restrict(Node a, Node b, Set<Node.Kind> possibilities) {
-		ImmutableSet<Node.Kind> currentPossibilities = possibilities(a, b);
-		Set<Node.Kind> intersection = Sets.intersection(possibilities, currentPossibilities);
-		return set(a, b, intersection);
+		return set(a, b, Sets.intersection(possibilities, possibilities(a, b)));
 	}
 
 	/**
