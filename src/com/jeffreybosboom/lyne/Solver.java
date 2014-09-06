@@ -61,12 +61,10 @@ public class Solver {
 	}
 
 	/**
-	 * Returns the paths through the given solved puzzle, one per color.  Note
-	 * there may be more than one possible path for a given puzzle and color;
-	 * this method makes an arbitrary choice.
+	 * Returns the paths through the given solved puzzle, one per color, or null
+	 * if the solution paths are unsatisfying.
 	 * @param puzzle a solved puzzle
-	 * @return the solution paths, one per color
-	 * @throws ContradictionException
+	 * @return the solution paths, one per color, or null
 	 */
 	private static Set<List<Node>> solutionPaths(Puzzle puzzle) {
 		puzzle.getClass();
@@ -84,6 +82,8 @@ public class Solver {
 		Multiset<Node> counts = HashMultiset.create();
 		paths.stream().forEachOrdered(counts::addAll);
 		//ensure each node appears enough times over all the paths
+		//TODO: we check colored node appearances in findPath, so this could be
+		//just octagons?
 		if (!puzzle.nodes().allMatch(n -> counts.count(n) == (n.desiredEdges()+1)/2))
 			return null;
 		return paths;
