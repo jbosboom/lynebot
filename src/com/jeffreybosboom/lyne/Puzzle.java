@@ -23,6 +23,8 @@ public final class Puzzle {
 	};
 	private final Node[][] nodes;
 	private final ImmutableMap<Node, ImmutableSet<Node>> neighbors;
+	//TODO: consider replacing with edgeSets.keySet() -- not sure of performance
+	//impact, as edges() is hammered by CrossingEdgesRule
 	private final ImmutableSet<Pair<Node, Node>> edges;
 	private final ImmutableMap<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSets;
 	public Puzzle(Node[][] nodes) {
@@ -75,6 +77,8 @@ public final class Puzzle {
 		assert edgeSets.containsKey(edge) : "not an edge: "+edge;
 		assert !newEdgeSet.contains(Node.Kind.OCTAGON);
 		assert !newEdgeSet.isEmpty();
+		//TODO: no-change and ContradictionException checks could be moved here
+		//from set and remove.
 		ImmutableMap.Builder<Pair<Node, Node>, ImmutableSet<Node.Kind>> edgeSetBuilder = ImmutableMap.builder();
 		edgeSets.entrySet().stream()
 				.filter(e -> !e.getKey().equals(edge))
@@ -83,6 +87,10 @@ public final class Puzzle {
 		return new Puzzle(this, edgeSetBuilder.build());
 	}
 
+	/**
+	 * Creates a Puzzle by parsing a String.  This method is the inverse of
+	 * toString().
+	 */
 	public static Puzzle fromString(String str) {
 		String[] rows = str.split("\n");
 		checkArgument(Arrays.stream(rows).mapToInt(s -> s.length()).distinct().count() == 1, "not rectangular");
@@ -114,6 +122,7 @@ public final class Puzzle {
 
 	/**
 	 * Returns the pair of terminals for each color present in the puzzle.
+	 * These are usually not edges!
 	 * @return pairs of terminals
 	 */
 	public Stream<Pair<Node, Node>> terminals() {
@@ -128,8 +137,9 @@ public final class Puzzle {
 	}
 
 	/**
-	 * Returns each pair of adjacent nodes exactly once.
-	 * @return
+	 * Returns each edge (pair of adjacent nodes) exactly once.  The returned
+	 * pairs are in canonical order.
+	 * @return a stream of edges in this puzzle
 	 */
 	public Stream<Pair<Node, Node>> edges() {
 		return edges.stream();
@@ -144,15 +154,7 @@ public final class Puzzle {
 	 * Returns a Puzzle with the given possibility removed from the edge between
 	 * the given nodes.  If the possibility is already not possible, this Puzzle
 	 * is returned.  If this removes the last possibility for this edge,
-	 * a ContradictionException is thrown.  If the edge was modified,
-	 * {@link Node#desiredEdges() desired-edges} processing will be performed on
-	 * both nodes (possibly leading to further recursive modification), possibly
-	 * leading to a ContradictionException.
-	 * @param a
-	 * @param b
-	 * @param possibility
-	 * @return
-	 * @throws ContradictionException
+	 * a ContradictionException is thrown.
 	 */
 	public Puzzle remove(Node a, Node b, Node.Kind possibility) {
 		Pair<Node, Node> p = Pair.sorted(a, b);
@@ -175,24 +177,16 @@ public final class Puzzle {
 
 	/**
 	 * Returns a Puzzle with the given possibility being the only one in the
-	 * edge between the given nodes.  If the edge is diagonal and being set to a
-	 * possibility besides NONE, the crossing edge
-	 * (if any) is set to NONE.  If this possibility is already the only
+	 * edge between the given nodes.  If this possibility is already the only
 	 * possible, this Puzzle is returned.  If this possibility is not possible,
-	 * a ContradictionException is thrown.  Also deferred-edges processing.
-	 * @param a
-	 * @param b
-	 * @param possibility
-	 * @return
-	 * @throws ContradictionException
+	 * a ContradictionException is thrown.
 	 */
 	public Puzzle set(Node a, Node b, Node.Kind possibility) {
 		return set(a, b, ImmutableSet.of(possibility));
 	}
 
-	public Puzzle set(Node a, Node b, Set<Node.Kind> possibilities) {
-		//TODO: does this make sense?  will we always want restrict instead?
-		//maybe private?
+	private Puzzle set(Node a, Node b, Set<Node.Kind> possibilities) {
+		//private because rules actually want to call restrict instead
 		Pair<Node, Node> p = Pair.sorted(a, b);
 		ImmutableSet<Node.Kind> currentPossibilities = possibilities(a, b);
 		if (possibilities.isEmpty() || !currentPossibilities.containsAll(possibilities))
@@ -205,7 +199,7 @@ public final class Puzzle {
 
 	@Override
 	public String toString() {
-		//TODO: concise way to build edge sets?
+		//TODO: concise way to print edge sets?
 		StringBuilder sb = new StringBuilder();
 		for (Node[] r : nodes) {
 			for (Node n : r)
