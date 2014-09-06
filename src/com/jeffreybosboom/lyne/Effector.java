@@ -49,7 +49,6 @@ public final class Effector {
 
 	public void playPuzzle() {
 		BufferedImage image = robot.createScreenCapture(lyneRect);
-//		ImageIO.write(image, "PNG", new File("screenshot.png"));
 		Pair<Puzzle, ImmutableMap<Node, Region.Point>> parseImage = parseImage(image);
 		System.out.println(parseImage.first);
 		Set<List<Node>> solutionPaths = Solver.solve(parseImage.first);
