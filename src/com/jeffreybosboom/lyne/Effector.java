@@ -21,7 +21,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * UI interaction with Lyne.
+ * UI interaction with Lyne.  Effector finds the Lyne window by looking for its
+ * characteristic border, and assumes the window will not move once found.  Note
+ * that Effector may misdetect screenshots of Lyne as the actual Lyne window.
+ *
+ * Effector currently does not automate any of the menus.
  * @author Jeffrey Bosboom <jbosboom@csail.mit.edu>
  * @since 9/5/2014
  */
